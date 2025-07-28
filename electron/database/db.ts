@@ -1,8 +1,10 @@
 import { app } from 'electron';
 import path from 'node:path';
 import fs from 'node:fs';
-import Database from 'better-sqlite3';
 import { v4 as uuidv4 } from 'uuid';
+import { createRequire } from 'module';
+const require = createRequire(import.meta.url);
+const Database = require('better-sqlite3');
 
 let db: Database.Database | null = null;
 
@@ -73,4 +75,28 @@ export function saveRequestToHistory(request: SaveRequestOptions) {
       : JSON.stringify(request.response_data || {}),
     createdAt
   );
+}
+
+export function getAllRequests() {
+  if (!db) initDatabase();
+
+  const stmt = db!.prepare(`SELECT * FROM requests_history ORDER BY created_at DESC`);
+  const requests = stmt.all(); // get all rows
+
+  // Parse JSON fields before returning (optional, but useful)
+  return requests.map((row) => ({
+    ...row,
+    headers: JSON.parse(row.headers),
+    params: JSON.parse(row.params),
+    response_data: (() => {
+      try {
+        return JSON.parse(row.response_data);
+      } catch {
+        return row.response_data;
+      }
+    })(),
+    ok: Boolean(row.ok),
+    status: row.status,
+    created_at: row.created_at,
+  }));
 }

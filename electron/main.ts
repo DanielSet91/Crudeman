@@ -1,12 +1,11 @@
-import { app, BrowserWindow } from 'electron';
+import { app, BrowserWindow, ipcMain } from 'electron';
 import { createRequire } from 'node:module';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
-import { v4 as uuidv4 } from 'uuid';
-import { initDatabase, saveRequestToHistory } from './database/db';
+import { saveRequestToHistory, getAllRequests } from './database/db';
 
-const require = createRequire(import.meta.url);
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
+// const require = createRequire(import.meta.url);
 
 process.env.APP_ROOT = path.join(__dirname, '..');
 
@@ -38,22 +37,14 @@ function createWindow() {
   }
 }
 
-async function runDBExample() {
-  const db = initDatabase(); // Initialize DB once
 
-  saveRequestToHistory({
-    id: uuidv4(),
-    name: 'GET Users',
-    url: 'https://api.example.com/users',
-    method: 'GET',
-    headers: { Authorization: 'Bearer token' },
-    body: '',
-    createdAt: new Date().toISOString(),
-  });
+ipcMain.handle('save-request-to-history', async (_event, request) => {
+  saveRequestToHistory(request);
+});
 
-  // const requests = await getAllRequests();
-  // console.log('Saved requests:', requests);
-}
+ipcMain.handle('get-all-requests', () => {
+  return getAllRequests();  // your DB function
+});
 
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') {
@@ -70,5 +61,4 @@ app.on('activate', () => {
 
 app.whenReady().then(async () => {
   createWindow();
-  await runDBExample();
 });
