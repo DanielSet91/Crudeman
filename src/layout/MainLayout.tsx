@@ -1,4 +1,4 @@
-import React from 'react'
+import React from 'react';
 import {
   AppBar,
   Toolbar,
@@ -11,36 +11,30 @@ import {
   ListItemText,
   ListItemIcon,
   ListItemButton,
-} from '@mui/material'
-import MenuIcon from '@mui/icons-material/Menu'
-import DashboardIcon from '@mui/icons-material/Dashboard'
-import HistoryIcon from '@mui/icons-material/History'
-import { Link as RouterLink } from 'react-router-dom'
+} from '@mui/material';
+import MenuIcon from '@mui/icons-material/Menu';
+import DashboardIcon from '@mui/icons-material/Dashboard';
+import HistoryIcon from '@mui/icons-material/History';
+import { Link as RouterLink } from 'react-router-dom';
+import { DRAWERWIDTH } from '../common/constants';
 
-const drawerWidth = 240
 const drawerItems = [
   { text: 'Dashboard', icon: <DashboardIcon />, path: '/' },
   { text: 'History', icon: <HistoryIcon />, path: '/history' },
-]
+];
 
 interface MainLayoutProps {
-  children: React.ReactNode
-  toggleDrawer: () => void
-  drawerOpen: boolean
-  closeDrawer: () => void
+  children: React.ReactNode;
+  toggleDrawer: () => void;
+  drawerOpen: boolean;
+  closeDrawer: () => void;
 }
 
-const MainLayout = ({
-  children,
-  toggleDrawer,
-  drawerOpen,
-  closeDrawer,
-}: MainLayoutProps ) => {
-
+const MainLayout = ({ children, toggleDrawer, drawerOpen, closeDrawer }: MainLayoutProps) => {
   return (
-    <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
+    <Box sx={{ display: 'flex', flexDirection: 'column' }}>
       <AppBar
-        position="fixed"
+        position="absolute"
         elevation={0}
         sx={{
           zIndex: 100,
@@ -57,14 +51,13 @@ const MainLayout = ({
           </IconButton>
         </Toolbar>
       </AppBar>
-
       <Drawer open={drawerOpen} onClose={closeDrawer}>
         <Box
-          sx={{ width: drawerWidth }}
+          sx={{ width: DRAWERWIDTH }}
           role="presentation"
           onKeyDown={(event) => {
-            if (event.key === 'Tab' || event.key === 'Shift') return
-            if (event.key === 'Escape') closeDrawer()
+            if (event.key === 'Tab' || event.key === 'Shift') return;
+            if (event.key === 'Escape') closeDrawer();
           }}
         >
           <List>
@@ -79,9 +72,9 @@ const MainLayout = ({
           </List>
         </Box>
       </Drawer>
-      <Box sx={{ mt: 8, flex: 1, px: 2 }}>{children}</Box>
+      <Box sx={{ mt: 1, flex: 1, display: 'flex', flexDirection: 'column', width: '100%' }}>{children}</Box>
     </Box>
-  )
-}
+  );
+};
 
-export default MainLayout
+export default MainLayout;

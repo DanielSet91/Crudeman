@@ -1,8 +1,7 @@
-import React from 'react'
-import { Box } from '@mui/material'
+import { Box } from '@mui/material';
 
 const ApiHistory = () => {
-  return <Box>History</Box>
-}
+  return <Box>History</Box>;
+};
 
-export default ApiHistory
+export default ApiHistory;

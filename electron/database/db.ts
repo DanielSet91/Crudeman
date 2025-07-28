@@ -1,57 +1,76 @@
-import { app } from 'electron'
-import path from 'node:path'
-import fs from 'node:fs'
-import Database from 'better-sqlite3'
+import { app } from 'electron';
+import path from 'node:path';
+import fs from 'node:fs';
+import Database from 'better-sqlite3';
+import { v4 as uuidv4 } from 'uuid';
 
-let db
+let db: Database.Database | null = null;
 
 export function initDatabase() {
-  if (db) return db
+  if (db) return db;
 
-  const userDataPath = app.getPath('userData')
-  const dbPath = path.join(userDataPath, 'postman.sqlite')
+  const userDataPath = app.getPath('userData');
+  const dbPath = path.join(userDataPath, 'postman.sqlite');
 
   if (!fs.existsSync(path.dirname(dbPath))) {
-    fs.mkdirSync(path.dirname(dbPath), { recursive: true })
+    fs.mkdirSync(path.dirname(dbPath), { recursive: true });
   }
 
-  db = new Database(dbPath)
+  db = new Database(dbPath);
 
-  db.prepare(
-    `
-    CREATE TABLE IF NOT EXISTS requests (
+  db.prepare(`
+    CREATE TABLE IF NOT EXISTS requests_history (
       id TEXT PRIMARY KEY,
-      name TEXT,
-      url TEXT,
       method TEXT,
+      url TEXT,
       headers TEXT,
+      params TEXT,
       body TEXT,
-      createdAt TEXT
+      status INTEGER,
+      ok BOOLEAN,
+      response_data TEXT,
+      created_at TEXT
     )
-  `
-  ).run()
+  `).run();
 
-  return db
+  return db;
 }
 
-export async function saveRequest(request) {
-  // Convert headers object to JSON string for storage
-  const headersStr = JSON.stringify(request.headers || {})
-
-  const stmt = db.prepare(`
-    INSERT INTO requests (id, name, url, method, headers, body, createdAt)
-    VALUES (?, ?, ?, ?, ?, ?, ?)
-  `)
-  stmt.run(request.id, request.name, request.url, request.method, headersStr, request.body, request.createdAt)
+interface SaveRequestOptions {
+  method: string;
+  url: string;
+  headers?: Record<string, string>;
+  params?: Record<string, string>;
+  body?: string;
+  status?: number;
+  ok?: boolean;
+  response_data?: any;
 }
 
-export async function getAllRequests() {
-  const stmt = db.prepare('SELECT * FROM requests')
-  const rows = stmt.all()
+export function saveRequestToHistory(request: SaveRequestOptions) {
+  if (!db) initDatabase();
 
-  // Parse headers JSON string back to object
-  return rows.map((row) => ({
-    ...row,
-    headers: JSON.parse(row.headers),
-  }))
+  const id = uuidv4();
+  const createdAt = new Date().toISOString();
+
+  const stmt = db!.prepare(`
+    INSERT INTO requests_history
+    (id, method, url, headers, params, body, status, ok, response_data, created_at)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+  `);
+
+  stmt.run(
+    id,
+    request.method,
+    request.url,
+    JSON.stringify(request.headers || {}),
+    JSON.stringify(request.params || {}),
+    request.body || '',
+    request.status || 0,
+    request.ok ? 1 : 0,
+    typeof request.response_data === 'string'
+      ? request.response_data
+      : JSON.stringify(request.response_data || {}),
+    createdAt
+  );
 }

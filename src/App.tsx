@@ -1,18 +1,18 @@
-import './App.css'
-import { useState } from 'react'
-import RootNavigator from './routes/RootNavigator'
-import MainLayout from './layout/MainLayout'
+import './App.css';
+import { useState } from 'react';
+import RootNavigator from './routes/RootNavigator';
+import MainLayout from './layout/MainLayout';
 
 function App() {
-  const [drawerOpen, setDrawerOpen] = useState(false)
+  const [drawerOpen, setDrawerOpen] = useState(false);
 
   const toggleDrawer = () => {
-    setDrawerOpen((prev) => !prev)
-  }
+    setDrawerOpen((prev) => !prev);
+  };
 
   const closeDrawer = () => {
-    setDrawerOpen(false)
-  }
+    setDrawerOpen(false);
+  };
 
   return (
     <>
@@ -20,7 +20,7 @@ function App() {
         <RootNavigator />
       </MainLayout>
     </>
-  )
+  );
 }
 
-export default App
+export default App;

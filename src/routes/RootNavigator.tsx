@@ -1,6 +1,6 @@
-import { Routes, Route } from 'react-router-dom'
-import Dashboard from '../pages/Dashboard/dashboard'
-import HistoryNavigator from './HistoryNavigator'
+import { Routes, Route } from 'react-router-dom';
+import Dashboard from '../pages/Dashboard/dashboard';
+import HistoryNavigator from './HistoryNavigator';
 
 function RootNavigator() {
   return (
@@ -8,7 +8,7 @@ function RootNavigator() {
       <Route path="/" element={<Dashboard />} />
       <Route path="/history/*" element={<HistoryNavigator />} />
     </Routes>
-  )
+  );
 }
 
-export default RootNavigator
+export default RootNavigator;
