@@ -1,37 +1,44 @@
-import React, { useEffect, useState } from 'react';
-import { Box, Tabs, Tab, Button, Typography, Paper } from '@mui/material';
-import { METHODS } from '../../common/constants';
+import { useEffect, useState, useCallback } from 'react';
+import { Box } from '@mui/material';
 import { RequestService } from '../../services/RequestService';
 import { useNavigate } from 'react-router-dom';
 import { SavedRequest } from '../../types/commonTypes';
 import EditRequestModal from './components/EditRequestModal';
+import RequestCard from './components/RequestCard';
+import MethodTabs from './components/MethodTabs';
 
 const ApiHistory = () => {
   const [requests, setRequests] = useState([]);
-  const [filtered, setFiltered] = useState([]);
+  const [filtered, setFiltered] = useState<SavedRequest[]>([]);
   const [tab, setTab] = useState('all');
   const [editRequest, setEditRequest] = useState<SavedRequest | null>(null);
   const navigate = useNavigate();
 
-  const fetchRequests = async () => {
+  const fetchRequests = useCallback(async () => {
     const data = await RequestService.getAll();
     setRequests(data);
-    setFiltered(tab === 'all' ? data : data.filter((r) => r.method === tab));
-  };
+    let filteredData = data;
+
+    if (tab !== 'all') {
+      filteredData = data.filter((request: SavedRequest) => request.method === tab);
+    }
+
+    setFiltered(filteredData);
+  }, [tab, setRequests, setFiltered]);
 
   useEffect(() => {
     fetchRequests();
-  }, []);
+  }, [fetchRequests]);
 
   useEffect(() => {
     if (tab === 'all') {
       setFiltered(requests);
     } else {
-      setFiltered(requests.filter((r) => r.method === tab));
+      setFiltered(requests.filter((r: SavedRequest) => r.method === tab));
     }
   }, [tab, requests]);
 
-  const handleEditOpen = (req) => {
+  const handleEditOpen = (req: SavedRequest) => {
     setEditRequest(req);
   };
 
@@ -39,54 +46,37 @@ const ApiHistory = () => {
     setEditRequest(null);
   };
 
-  const handleDelete = (id: string) => {
-    RequestService.delete(id);
-    fetchRequests();
+  const handleDelete = async (id: string) => {
+    const result = await RequestService.delete(id);
+    if (result) {
+      fetchRequests();
+    } else {
+      alert('Failed to delete the request.');
+    }
   };
 
-  const handleSendAgain = () => {
-    navigate('/', { state: editRequest });
+  const handleSendAgain = (updatedRequest: SavedRequest) => {
+    navigate('/', { state: updatedRequest });
+    handleEditClose();
+  };
+
+  const handleOnSave = async (id: string, updates: Partial<SavedRequest>) => {
+    const result = await RequestService.edit(id, updates);
+    if (!result) {
+      alert('Failed to save changes.');
+      return;
+    }
+    fetchRequests();
     handleEditClose();
   };
 
   return (
     <Box>
-      <Tabs value={tab} onChange={(_, newValue) => setTab(newValue)}>
-        <Tab label="All" value="all" />
-        {METHODS.map((method) => (
-          <Tab key={method} label={method} value={method} />
-        ))}
-      </Tabs>
-
+      <MethodTabs tab={tab} setTab={setTab} />
       <Box mt={2}>
         {filtered.length > 0
           ? filtered.map((req) => (
-              <Paper key={req.id} sx={{ p: 2, mb: 2 }}>
-                <Typography variant="subtitle2" color="text.secondary">
-                  {req.created_at}
-                </Typography>
-                <Typography variant="h6">
-                  {req.method} {req.url} - {req.status}
-                </Typography>
-                <Typography variant="subtitle2" sx={{ mt: 1 }}>
-                  Response:
-                </Typography>
-                <Paper sx={{ p: 1, pl: 2, whiteSpace: 'pre-wrap', backgroundColor: '#f5f5f5' }}>
-                  <Typography variant="body2">
-                    {typeof req.response_data === 'object'
-                      ? JSON.stringify(req.response_data, null, 2)
-                      : String(req.response_data)}
-                  </Typography>
-                </Paper>
-                <Box sx={{ mt: 1, display: 'flex', gap: 2, justifyContent: 'center' }}>
-                  <Button size="small" variant="outlined" onClick={() => handleEditOpen(req)}>
-                    Edit
-                  </Button>
-                  <Button size="small" variant="outlined" color="error" onClick={() => handleDelete(req.id)}>
-                    Delete
-                  </Button>
-                </Box>
-              </Paper>
+              <RequestCard key={req.id} request={req} onEdit={handleEditOpen} onDelete={handleDelete} />
             ))
           : 'No requests'}
       </Box>
@@ -94,10 +84,8 @@ const ApiHistory = () => {
         request={editRequest}
         open={!!editRequest}
         onClose={handleEditClose}
-        onSend={(req) => {
-          navigate('/', { state: req });
-          handleEditClose();
-        }}
+        onSend={handleSendAgain}
+        onSave={handleOnSave}
       />
     </Box>
   );

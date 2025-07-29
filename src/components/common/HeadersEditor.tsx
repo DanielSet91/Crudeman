@@ -2,7 +2,7 @@ import { Box, TextField, IconButton, Checkbox, FormControlLabel } from '@mui/mat
 import AddIcon from '@mui/icons-material/Add';
 import DeleteIcon from '@mui/icons-material/Delete';
 import { useEffect } from 'react';
-import { Header } from '../../../types/commonTypes';
+import { Header } from '../../types/commonTypes';
 
 interface HeadersEditorParams {
   headers: Header[];

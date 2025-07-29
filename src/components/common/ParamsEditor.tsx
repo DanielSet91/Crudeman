@@ -1,8 +1,8 @@
-import React, { useEffect } from 'react';
+import { useEffect } from 'react';
 import { Box, TextField, IconButton } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import DeleteIcon from '@mui/icons-material/Delete';
-import { Param } from '../../../types/commonTypes';
+import { Param } from '../../types/commonTypes';
 
 interface ParamsEditorProps {
   params: Param[];

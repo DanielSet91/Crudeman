@@ -5,8 +5,8 @@ import { v4 as uuidv4 } from 'uuid';
 import { createRequire } from 'module';
 import { SavedRequest, SaveRequestOptions } from '../../src/types/commonTypes';
 
-const require = createRequire(import.meta.url);
-const Database = require('better-sqlite3');
+const nodeRequire = createRequire(import.meta.url);
+const Database = nodeRequire('better-sqlite3');
 
 export class RequestHistoryDatabase {
   private db: typeof Database.prototype;
@@ -114,6 +114,8 @@ export class RequestHistoryDatabase {
         dbValue = typeof value === 'string' ? value : JSON.stringify(value);
       } else if (key === 'ok') {
         dbValue = value ? 1 : 0;
+      } else if (key === 'body') {
+        dbValue = typeof value === 'string' ? value : JSON.stringify(value);
       }
 
       fields.push(`${key} = ?`);
