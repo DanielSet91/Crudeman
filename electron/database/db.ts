@@ -3,100 +3,131 @@ import path from 'node:path';
 import fs from 'node:fs';
 import { v4 as uuidv4 } from 'uuid';
 import { createRequire } from 'module';
+import { SavedRequest, SaveRequestOptions } from '../../src/types/commonTypes';
+
 const require = createRequire(import.meta.url);
 const Database = require('better-sqlite3');
 
-let db: Database.Database | null = null;
+export class RequestHistoryDatabase {
+  private db: typeof Database.prototype;
 
-export function initDatabase() {
-  if (db) return db;
+  constructor() {
+    const userDataPath = app.getPath('userData');
+    const dbPath = path.join(userDataPath, 'postman.sqlite');
 
-  const userDataPath = app.getPath('userData');
-  const dbPath = path.join(userDataPath, 'postman.sqlite');
+    if (!fs.existsSync(path.dirname(dbPath))) {
+      fs.mkdirSync(path.dirname(dbPath), { recursive: true });
+    }
 
-  if (!fs.existsSync(path.dirname(dbPath))) {
-    fs.mkdirSync(path.dirname(dbPath), { recursive: true });
+    this.db = new Database(dbPath);
+
+    this.db
+      .prepare(
+        `
+      CREATE TABLE IF NOT EXISTS requests_history (
+        id TEXT PRIMARY KEY,
+        method TEXT,
+        url TEXT,
+        headers TEXT,
+        params TEXT,
+        body TEXT,
+        status INTEGER,
+        ok BOOLEAN,
+        response_data TEXT,
+        created_at TEXT
+      )
+    `
+      )
+      .run();
   }
 
-  db = new Database(dbPath);
+  saveRequest(request: SaveRequestOptions) {
+    const id = uuidv4();
+    const createdAt = new Date().toISOString();
 
-  db.prepare(`
-    CREATE TABLE IF NOT EXISTS requests_history (
-      id TEXT PRIMARY KEY,
-      method TEXT,
-      url TEXT,
-      headers TEXT,
-      params TEXT,
-      body TEXT,
-      status INTEGER,
-      ok BOOLEAN,
-      response_data TEXT,
-      created_at TEXT
-    )
-  `).run();
+    const stmt = this.db.prepare(`
+      INSERT INTO requests_history
+      (id, method, url, headers, params, body, status, ok, response_data, created_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `);
 
-  return db;
-}
+    stmt.run(
+      id,
+      request.method,
+      request.url,
+      JSON.stringify(request.headers || {}),
+      JSON.stringify(request.params || {}),
+      request.body || '',
+      request.status || 0,
+      request.ok ? 1 : 0,
+      typeof request.response_data === 'string' ? request.response_data : JSON.stringify(request.response_data || {}),
+      createdAt
+    );
+  }
 
-interface SaveRequestOptions {
-  method: string;
-  url: string;
-  headers?: Record<string, string>;
-  params?: Record<string, string>;
-  body?: string;
-  status?: number;
-  ok?: boolean;
-  response_data?: any;
-}
+  getAllRequests() {
+    const stmt = this.db.prepare(`SELECT * FROM requests_history ORDER BY created_at DESC`);
+    const rows = stmt.all();
 
-export function saveRequestToHistory(request: SaveRequestOptions) {
-  if (!db) initDatabase();
+    return rows.map((row: SavedRequest) => ({
+      ...row,
+      headers: typeof row.headers === 'string' ? JSON.parse(row.headers) : (row.headers ?? {}),
+      params: typeof row.params === 'string' ? JSON.parse(row.params) : (row.params ?? {}),
+      response_data: (() => {
+        try {
+          return typeof row.response_data === 'string' ? JSON.parse(row.response_data) : row.response_data;
+        } catch {
+          return row.response_data;
+        }
+      })(),
+      ok: Boolean(row.ok),
+      status: row.status,
+      created_at: row.created_at,
+    }));
+  }
 
-  const id = uuidv4();
-  const createdAt = new Date().toISOString();
+  deleteRequest(id: string) {
+    if (!id) {
+      throw new Error('Missing id for deletion.');
+    }
+    const stmt = this.db.prepare(`DELETE FROM requests_history WHERE id = ?`);
+    stmt.run(id);
+  }
 
-  const stmt = db!.prepare(`
-    INSERT INTO requests_history
-    (id, method, url, headers, params, body, status, ok, response_data, created_at)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-  `);
+  editRequest(id: string, updates: Partial<SaveRequestOptions>) {
+    if (!id) {
+      throw new Error('Missing id for editing.');
+    }
 
-  stmt.run(
-    id,
-    request.method,
-    request.url,
-    JSON.stringify(request.headers || {}),
-    JSON.stringify(request.params || {}),
-    request.body || '',
-    request.status || 0,
-    request.ok ? 1 : 0,
-    typeof request.response_data === 'string'
-      ? request.response_data
-      : JSON.stringify(request.response_data || {}),
-    createdAt
-  );
-}
+    const fields: string[] = [];
+    const values: any[] = [];
 
-export function getAllRequests() {
-  if (!db) initDatabase();
+    for (const [key, value] of Object.entries(updates)) {
+      if (value === undefined) continue;
 
-  const stmt = db!.prepare(`SELECT * FROM requests_history ORDER BY created_at DESC`);
-  const requests = stmt.all(); // get all rows
+      let dbValue = value;
 
-  // Parse JSON fields before returning (optional, but useful)
-  return requests.map((row) => ({
-    ...row,
-    headers: JSON.parse(row.headers),
-    params: JSON.parse(row.params),
-    response_data: (() => {
-      try {
-        return JSON.parse(row.response_data);
-      } catch {
-        return row.response_data;
+      // Handle specific JSON stringification for complex fields
+      if (key === 'headers' || key === 'params') {
+        dbValue = JSON.stringify(value);
+      } else if (key === 'response_data') {
+        dbValue = typeof value === 'string' ? value : JSON.stringify(value);
+      } else if (key === 'ok') {
+        dbValue = value ? 1 : 0;
       }
-    })(),
-    ok: Boolean(row.ok),
-    status: row.status,
-    created_at: row.created_at,
-  }));
+
+      fields.push(`${key} = ?`);
+      values.push(dbValue);
+    }
+
+    if (fields.length === 0) {
+      throw new Error('No fields provided to update.');
+    }
+
+    const sql = `UPDATE requests_history SET ${fields.join(', ')} WHERE id = ?`;
+    values.push(id);
+
+    const stmt = this.db.prepare(sql);
+    stmt.run(...values);
+  }
 }

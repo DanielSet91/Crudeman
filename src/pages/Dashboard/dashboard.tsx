@@ -1,11 +1,12 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Box, CssBaseline, Typography, Button, TextField, Select, MenuItem, Tabs, Tab, Paper } from '@mui/material';
 import ParamsEditor from './components/ParamsEditor';
 import HeadersEditor from './components/HeadersEditor';
 import BodyEditor from './components/BodyEditor';
-import { Header, HttpResponse, Method, Param } from '../../types/commonTypes';
-import { sendHttpRequest } from '../../utils/sendRequest';
+import { Header, Method, Param } from '../../types/commonTypes';
 import { METHODS } from '../../common/constants';
+import { RequestService } from '../../services/RequestService';
+import { useLocation } from 'react-router-dom';
 
 const Dashboard = () => {
   const [method, setMethod] = useState<Method>('GET');
@@ -15,6 +16,29 @@ const Dashboard = () => {
   const [body, setBody] = useState('');
   const [params, setParams] = useState<Param[]>([]);
   const [response, setResponse] = useState('');
+  const location = useLocation();
+  const prefillRequest = location.state;
+
+  useEffect(() => {
+    if (prefillRequest) {
+      setMethod(prefillRequest.method || 'GET');
+      setUrl(prefillRequest.url || '');
+      setHeaders(
+        Object.entries(prefillRequest.headers || {}).map(([key, value]) => ({
+          key,
+          value: String(value),
+          enabled: true,
+        }))
+      );
+      setParams(
+        Object.entries(prefillRequest.params || {}).map(([key, value]) => ({
+          key,
+          value: String(value),
+        }))
+      );
+      setBody(prefillRequest.body || '');
+    }
+  }, [prefillRequest]);
 
   const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
     setTabIndex(newValue);
@@ -25,7 +49,7 @@ const Dashboard = () => {
   };
 
   const handleSend = async () => {
-    const result = await sendHttpRequest({
+    const result = await RequestService.send({
       method,
       url,
       headers: headers
@@ -67,6 +91,7 @@ const Dashboard = () => {
             size="small"
             placeholder="https://api.example.com/"
             onChange={handleUrlChange}
+            value={url}
           />
           <Button variant="contained" color="primary" onClick={handleSend}>
             Send
