@@ -1,12 +1,19 @@
-export function ensureTrailingEmpty<T extends { key: string; value: string | number }>(
-  items: T[],
-  setItems: (items: T[]) => void,
-  defaultEmpty: T
-) {
-  const lastItem = items[items.length - 1];
-  const isFilled = lastItem?.key !== '' || lastItem?.value !== '';
+import { Header } from '../types/commonTypes';
 
-  if (isFilled) {
-    setItems([...items, defaultEmpty]);
+export function ensureTrailingEmpty(
+  items: Header[],
+  setItems: (items: Header[]) => void,
+  defaultEmpty: Header
+) {
+  const last = items[items.length - 1];
+
+  const isLastEmpty =
+    last &&
+    last.key === defaultEmpty.key &&
+    last.value === defaultEmpty.value &&
+    last.enabled === defaultEmpty.enabled;
+
+  if (!isLastEmpty) {
+    setItems([...items, { ...defaultEmpty }]);
   }
 }

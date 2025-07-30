@@ -19,7 +19,18 @@ const RequestCard = ({ request, onEdit, onDelete }: RequestCardProps) => {
       <Typography variant="subtitle2" sx={{ mt: 1 }}>
         Response:
       </Typography>
-      <Paper sx={{ p: 1, pl: 2, whiteSpace: 'pre-wrap', backgroundColor: '#f5f5f5' }}>
+      <Paper
+        sx={{
+          p: 1,
+          pl: 2,
+          mt: 1,
+          whiteSpace: 'pre-wrap',
+          backgroundColor: '#f5f5f5',
+          maxWidth: '100%',
+          overflowWrap: 'break-word',
+          wordBreak: 'break-word',
+        }}
+      >
         <Typography variant="body2">
           {typeof request.response_data === 'object'
             ? JSON.stringify(request.response_data, null, 2)

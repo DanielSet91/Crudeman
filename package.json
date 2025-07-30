@@ -5,17 +5,18 @@
   "description": "A lightweight API client and testing tool, similar to Postman.",
   "author": "Daniel Stephaniantz <danielset91@gmail.com>",
   "type": "module",
-"scripts": {
-  "dev": "vite",
-  "build": "npm run build:main && npm run build:renderer && electron-builder",
-"build:main": "tsc",
-  "build:renderer": "vite build",
-  "lint": "eslint \"src/**/*.{ts,tsx}\" --max-warnings=0",
-  "preview": "vite preview",
-  "format": "prettier --write \"src/**/*.{ts,tsx,js,jsx,json,css,md}\"",
-  "test": "jest",
-  "dist": "electron-builder"
-},
+  "scripts": {
+    "dev": "vite",
+    "build": "npm run build:main && npm run build:renderer && electron-builder",
+    "build:main": "tsc",
+    "build:renderer": "vite build",
+    "lint": "eslint \"src/**/*.{ts,tsx}\" --max-warnings=0",
+    "preview": "vite preview",
+    "format": "prettier --write \"src/**/*.{ts,tsx,js,jsx,json,css,md}\"",
+    "test": "jest",
+    "dist": "electron-builder",
+    "rebuild": "npx electron-rebuild -f -w better-sqlite3"
+  },
   "dependencies": {
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.1",
@@ -37,7 +38,7 @@
     "@typescript-eslint/eslint-plugin": "^7.1.1",
     "@typescript-eslint/parser": "^7.1.1",
     "@vitejs/plugin-react": "^4.2.1",
-    "electron": "^30.0.1",
+    "electron": "^28.2.3",
     "electron-builder": "^24.13.3",
     "electron-rebuild": "^3.2.9",
     "eslint": "^8.57.0",
