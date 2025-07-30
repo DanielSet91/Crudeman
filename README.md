@@ -24,6 +24,11 @@ Crudeman is a desktop application built with Electron, React, and Vite that enab
    npm run dev
    ```
 
+   4. **Build the executable (.exe)**
+   ```bash
+   npm run dist
+   ```
+
 ## Build Instructions
 
 To build the production-ready application:
@@ -48,10 +53,13 @@ This will generate the compiled files in the `dist` folder. You can then package
 
 - The app currently only supports basic HTTP methods (GET, POST, PUT, DELETE).
 - Error handling and validation for malformed requests or responses can be improved.
-- UI responsiveness and mobile support are limited as the focus is desktop.
-- No synchronization or cloud backup of request history; data is local only.
+- UI responsiveness is limited.
 - Request body parsing assumes JSON format, which may not cover all API use cases.
 - Some edge cases around header and parameter encoding may need refinement.
+- Currently does not support sending FormData (e.g., for file uploads via multipart/form-data).
+- The app cannot yet properly handle binary or non-JSON responses (e.g., images, files, or streamed content).
+- Designed for single-user use only — there is no support for authentication, user switching, or multi-user data isolation.
+
 
 ### Development Environment
 
