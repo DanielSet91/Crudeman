@@ -26,7 +26,7 @@ Crudeman is a desktop application built with Electron, React, and Vite that enab
 
    4. **Build the executable (.exe)**
    ```bash
-   npm run dist
+   npm run build
    ```
 
 ## Build Instructions
