@@ -8,7 +8,7 @@ import RequestCard from './components/RequestCard';
 import MethodTabs from './components/MethodTabs';
 
 const ApiHistory = () => {
-  const [requests, setRequests] = useState([]);
+  const [requests, setRequests] = useState<SavedRequest[]>([]);
   const [filtered, setFiltered] = useState<SavedRequest[]>([]);
   const [tab, setTab] = useState('all');
   const [editRequest, setEditRequest] = useState<SavedRequest | null>(null);
