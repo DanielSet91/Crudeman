@@ -3,6 +3,8 @@ import { Box, TextField, IconButton } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import DeleteIcon from '@mui/icons-material/Delete';
 import { Param } from '../../types/commonTypes';
+import { ensureTrailingEmpty } from '../../utils/gui';
+import { EMPTY_PARAM } from '../../common/constants';
 
 interface ParamsEditorProps {
   params: Param[];
@@ -10,12 +12,8 @@ interface ParamsEditorProps {
 }
 
 const ParamsEditor = ({ params, setParams }: ParamsEditorProps) => {
-  // Ensure there's always one empty row
   useEffect(() => {
-    const hasEmpty = params.some((p) => p.key === '' && p.value === '');
-    if (!hasEmpty) {
-      setParams([...params, { key: '', value: '' }]);
-    }
+    ensureTrailingEmpty(params, setParams, { key: '', value: '' });
   }, [params, setParams]);
 
   const handleChange = (index: number, field: 'key' | 'value', value: string) => {
@@ -25,7 +23,7 @@ const ParamsEditor = ({ params, setParams }: ParamsEditorProps) => {
   };
 
   const addParam = () => {
-    setParams([...params, { key: '', value: '' }]);
+    setParams([...params, EMPTY_PARAM]);
   };
 
   const removeParam = (index: number) => {

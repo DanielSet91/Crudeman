@@ -8,9 +8,23 @@ import { SavedRequest, SaveRequestOptions } from '../../src/types/commonTypes';
 const nodeRequire = createRequire(import.meta.url);
 const Database = nodeRequire('better-sqlite3');
 
+/**
+ * RequestHistoryDatabase provides persistent storage for HTTP requests and their responses
+ * using SQLite in the Electron userData directory.
+ *
+ * It creates a `requests_history` table if it does not exist, and supports
+ * saving, retrieving, deleting, and editing request records.
+ */
 export class RequestHistoryDatabase {
   private db: typeof Database.prototype;
 
+  /**
+   * Initializes the database connection and ensures the storage folder and table exist.
+   *
+   * Creates the SQLite database file in Electron's userData directory.
+   * If the database or its folder doesn't exist, they are created.
+   * The table `requests_history` is created if not existing.
+   */
   constructor() {
     const userDataPath = app.getPath('userData');
     const dbPath = path.join(userDataPath, 'postman.sqlite');
@@ -41,6 +55,12 @@ export class RequestHistoryDatabase {
       .run();
   }
 
+  /**
+   * Saves a new HTTP request and its response data to the database.
+   *
+   * @param {SaveRequestOptions} request - The request data to save.
+   *   Includes method, URL, headers, params, body, status, ok flag, and response data.
+   */
   saveRequest(request: SaveRequestOptions) {
     const id = uuidv4();
     const createdAt = new Date().toISOString();
@@ -65,6 +85,13 @@ export class RequestHistoryDatabase {
     );
   }
 
+  /**
+   * Retrieves all saved HTTP requests ordered by creation date descending.
+   *
+   * Parses JSON fields (headers, params, response_data) before returning.
+   *
+   * @returns {SavedRequest[]} Array of saved requests with parsed fields.
+   */
   getAllRequests() {
     const stmt = this.db.prepare(`SELECT * FROM requests_history ORDER BY created_at DESC`);
     const rows = stmt.all();
@@ -86,6 +113,12 @@ export class RequestHistoryDatabase {
     }));
   }
 
+  /**
+   * Deletes a saved request by its unique identifier.
+   *
+   * @param {string} id - The unique ID of the request to delete.
+   * @throws Will throw an error if the ID is missing or empty.
+   */
   deleteRequest(id: string) {
     if (!id) {
       throw new Error('Missing id for deletion.');
@@ -94,19 +127,27 @@ export class RequestHistoryDatabase {
     stmt.run(id);
   }
 
+  /**
+   * Edits fields of an existing saved request by its ID.
+   *
+   * Supports partial updates; only provided fields will be updated.
+   * Automatically handles JSON stringification of complex fields.
+   *
+   * @param {string} id - The unique ID of the request to update.
+   * @param {Partial<SaveRequestOptions>} updates - Object with fields to update.
+   * @throws Will throw an error if ID is missing or no update fields are provided.
+   */
   editRequest(id: string, updates: Partial<SaveRequestOptions>) {
     if (!id) {
       throw new Error('Missing id for editing.');
     }
 
     const fields: string[] = [];
-    const values: any[] = [];
+    const values: (string | number | null)[] = [];
 
     for (const [key, value] of Object.entries(updates)) {
       if (value === undefined) continue;
-
-      let dbValue = value;
-
+      let dbValue: string | number | null = null;
       // Handle specific JSON stringification for complex fields
       if (key === 'headers' || key === 'params') {
         dbValue = JSON.stringify(value);

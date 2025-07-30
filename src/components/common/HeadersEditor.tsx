@@ -3,6 +3,8 @@ import AddIcon from '@mui/icons-material/Add';
 import DeleteIcon from '@mui/icons-material/Delete';
 import { useEffect } from 'react';
 import { Header } from '../../types/commonTypes';
+import { ensureTrailingEmpty } from '../../utils/gui';
+import { EMPTY_HEADER } from '../../common/constants';
 
 interface HeadersEditorParams {
   headers: Header[];
@@ -42,12 +44,8 @@ const HeadersEditor = ({ headers, setHeaders }: HeadersEditorParams) => {
     setHeaders(updated);
   };
 
-  // Always have one empty header row at the end
   useEffect(() => {
-    const last = headers[headers.length - 1];
-    if (last && (last.key !== '' || last.value !== '')) {
-      setHeaders([...headers, { key: '', value: '', enabled: true }]);
-    }
+    ensureTrailingEmpty(headers, setHeaders, EMPTY_HEADER);
   }, [headers, setHeaders]);
 
   return (

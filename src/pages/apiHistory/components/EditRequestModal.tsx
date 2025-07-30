@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react';
-import { Box, Modal, Typography, TextField, Select, MenuItem, Button } from '@mui/material';
-import { METHODS } from '../../../common/constants';
+import { Box, Modal, Typography, TextField, Button } from '@mui/material';
 import { SavedRequest, Header, Param } from '../../../types/commonTypes';
 import RequestTabs from '../../../components/common/RequestTabs';
-import { RequestTransformer } from '../../../utils/RequestTransformer';
+import { RequestTransformer } from '../../../services/RequestTransformer';
 import MethodSelect from '../../../components/common/MethodSelect';
+import { Method } from '../../../types/commonTypes';
+import { getUpdatedRequestFields } from '../../../utils/format';
 
 interface EditRequestModalProps {
   request: SavedRequest | null;
@@ -15,7 +16,7 @@ interface EditRequestModalProps {
 }
 
 const EditRequestModal = ({ request, open, onClose, onSave, onSend }: EditRequestModalProps) => {
-  const [method, setMethod] = useState(request?.method || 'GET');
+  const [method, setMethod] = useState<Method>((request?.method as Method) || 'GET');
   const [url, setUrl] = useState(request?.url || '');
   const [headers, setHeaders] = useState<Header[]>(RequestTransformer.objectToHeaders(request?.headers));
   const [params, setParams] = useState<Param[]>(RequestTransformer.objectToParams(request?.params));
@@ -26,7 +27,7 @@ const EditRequestModal = ({ request, open, onClose, onSave, onSend }: EditReques
 
   useEffect(() => {
     if (open && request) {
-      setMethod(request.method);
+      setMethod(request.method as Method);
       setUrl(request.url);
       setHeaders(RequestTransformer.objectToHeaders(request.headers));
       setParams(RequestTransformer.objectToParams(request.params));
@@ -37,35 +38,9 @@ const EditRequestModal = ({ request, open, onClose, onSave, onSend }: EditReques
   const handleSave = () => {
     if (!request) return;
 
-    let parsedBody: unknown = body;
+    const updates = getUpdatedRequestFields(request, method, url, headers, params, body);
 
-    try {
-      parsedBody = body ? JSON.parse(body) : '';
-    } catch {
-      alert('Body is not valid JSON');
-      return;
-    }
-
-    const updates: Partial<SavedRequest> = {};
-
-    const isMethodChanged = method !== request.method;
-    const isUrlChanged = url !== request.url;
-
-    const updatedHeaders = RequestTransformer.headersToObject(headers);
-    const isHeadersChanged = JSON.stringify(updatedHeaders) !== JSON.stringify(request.headers);
-
-    const updatedParams = RequestTransformer.paramsToObject(params);
-    const isParamsChanged = JSON.stringify(updatedParams) !== JSON.stringify(request.params);
-
-    const isBodyChanged = JSON.stringify(parsedBody) !== JSON.stringify(request.body);
-
-    if (isMethodChanged) updates.method = method;
-    if (isUrlChanged) updates.url = url;
-    if (isHeadersChanged) updates.headers = updatedHeaders;
-    if (isParamsChanged) updates.params = updatedParams;
-    if (isBodyChanged) updates.body = JSON.stringify(parsedBody);
-
-    if (Object.keys(updates).length > 0) {
+    if (updates) {
       onSave(request.id, updates);
     } else {
       alert('No changes to save.');

@@ -21,10 +21,10 @@ export type RequestOptions = {
   body?: string;
 };
 
-export interface HttpResponse<T = any> {
+export interface HttpResponse {
   status: number;
   ok: boolean;
-  data: T;
+  data: unknown;
 }
 
 export type SaveRequestOptions = {
@@ -35,7 +35,7 @@ export type SaveRequestOptions = {
   body?: string;
   status?: number;
   ok?: boolean;
-  response_data?: any;
+  response_data?: unknown;
 };
 
 export type SavedRequest = SaveRequestOptions & {

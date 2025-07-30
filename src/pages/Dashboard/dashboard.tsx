@@ -7,7 +7,7 @@ import RequestControllers from './components/RequestControllers';
 import ResponseViewer from './components/ResponseViewer';
 import RequestTabs from '../../components/common/RequestTabs';
 import { formatHeaders, formatParams } from '../../utils/format';
-import { RequestTransformer } from '../../utils/RequestTransformer';
+import { RequestTransformer } from '../../services/RequestTransformer';
 
 const Dashboard = () => {
   const [method, setMethod] = useState<Method>('GET');
@@ -51,7 +51,11 @@ const Dashboard = () => {
       return;
     }
 
-    setResponse(result.data);
+    if (typeof result.data === 'string') {
+      setResponse(result.data);
+    } else {
+      setResponse(JSON.stringify(result.data, null, 2));
+    }
   };
 
   return (
