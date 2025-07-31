@@ -65,3 +65,12 @@ This will generate the compiled files in the `dist` folder. You can then package
 
 - Developed and tested on Windows 10/11.
 - Node.js version 20.18.1
+
+### ⚠️ Note on Native Modules
+
+This project uses native modules (like `better-sqlite3`), which may require rebuilding depending on your Node.js and Electron version.
+
+If you encounter a `NODE_MODULE_VERSION` error, please run:
+
+```bash
+npm run rebuild

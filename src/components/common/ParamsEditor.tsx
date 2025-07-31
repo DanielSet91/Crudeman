@@ -12,9 +12,13 @@ interface ParamsEditorProps {
 }
 
 const ParamsEditor = ({ params, setParams }: ParamsEditorProps) => {
+  const safeParams= params.map(param => ({
+  key: param.key,
+  value: param.value.toString()
+}));
   useEffect(() => {
-    ensureTrailingEmpty(params, setParams, { key: '', value: '' });
-  }, [params, setParams]);
+    ensureTrailingEmpty(safeParams, setParams, { key: '', value: '' });
+  }, [params, setParams, safeParams]);
 
   const handleChange = (index: number, field: 'key' | 'value', value: string) => {
     const updated = [...params];
